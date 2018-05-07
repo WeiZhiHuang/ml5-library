@@ -10,7 +10,6 @@ KNN Image Classifier model
 import * as dl from 'deeplearn';
 import { KNNImageClassifier as KNN } from 'deeplearn-knn-image-classifier';
 import { processVideo } from '../utils/imageUtilities';
-import * as io from '../utils/io';
 
 class KNNImageClassifier {
   constructor(numClasses, knnKValue, callback, video) {
@@ -82,7 +81,7 @@ class KNNImageClassifier {
     }
   }
 
-  save(name) {
+  save() {
     const logits = this.knn.classLogitsMatrices;
     const tensors = logits.map((t) => {
       if (t) {
@@ -90,25 +89,23 @@ class KNNImageClassifier {
       }
       return null;
     });
-    const fileName = name || Date.now();
-    io.saveFile(`${fileName}.json`, JSON.stringify({ logits, tensors }));
+    localStorage.setItem('trainingModel', JSON.stringify({ logits, tensors }));
   }
 
   load(path, callback) {
-    io.loadFile(path, (data) => {
-      const tensors = data.tensors.map((tensor, i) => {
-        if (tensor) {
-          const values = Object.keys(tensor).map(v => tensor[v]);
-          return dl.tensor(values, data.logits[i].shape, data.logits[i].dtype);
-        }
-        return null;
-      });
-      this.hasAnyTrainedClass = true;
-      this.knn.setClassLogitsMatrices(tensors);
-      if (callback) {
-        callback();
+    const data = JSON.parse(localStorage.getItem('trainingModel'));
+    const tensors = data.tensors.map((tensor, i) => {
+      if (tensor) {
+        const values = Object.keys(tensor).map(v => tensor[v]);
+        return dl.tensor(values, data.logits[i].shape, data.logits[i].dtype);
       }
+      return null;
     });
+    this.hasAnyTrainedClass = true;
+    this.knn.setClassLogitsMatrices(tensors);
+    if (callback) {
+      callback();
+    }
   }
 
   static async loadModel(model) {
