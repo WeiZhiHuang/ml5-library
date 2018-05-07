@@ -92,7 +92,7 @@ class KNNImageClassifier {
     localStorage.setItem('trainingModel', JSON.stringify({ logits, tensors }));
   }
 
-  load(path, callback) {
+  load(callback) {
     const data = JSON.parse(localStorage.getItem('trainingModel'));
     const tensors = data.tensors.map((tensor, i) => {
       if (tensor) {
